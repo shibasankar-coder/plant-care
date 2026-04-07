@@ -10,6 +10,10 @@ const AddPlant = () => {
         plantType: '',
         wateringFrequency: 7,
         lastWateredDate: new Date().toISOString().split('T')[0],
+        fertilizeFrequency: 0,
+        lastFertilizedDate: '',
+        repotFrequency: 0,
+        lastRepottedDate: '',
         notes: '',
         image: ''
     });
@@ -37,8 +41,13 @@ const AddPlant = () => {
         e.preventDefault();
         setLoading(true);
         setError('');
+        
         try {
-            await api.post('/plants', formData);
+            const payload = { ...formData };
+            if (!payload.lastFertilizedDate) delete payload.lastFertilizedDate;
+            if (!payload.lastRepottedDate) delete payload.lastRepottedDate;
+            
+            await api.post('/plants', payload);
             navigate('/');
         } catch (err) {
             setError(err.response?.data?.message || 'Error adding plant');
@@ -115,6 +124,52 @@ const AddPlant = () => {
                                 name="lastWateredDate"
                                 required
                                 value={formData.lastWateredDate}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all bg-slate-50 focus:bg-white text-slate-700"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-slate-700">Fertilize Frequency (days, 0 to disable)</label>
+                            <input
+                                type="number"
+                                name="fertilizeFrequency"
+                                min="0"
+                                value={formData.fertilizeFrequency}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all bg-slate-50 focus:bg-white"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-slate-700">Last Fertilized Date</label>
+                            <input
+                                type="date"
+                                name="lastFertilizedDate"
+                                value={formData.lastFertilizedDate}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all bg-slate-50 focus:bg-white text-slate-700"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-slate-700">Repot Frequency (days, 0 to disable)</label>
+                            <input
+                                type="number"
+                                name="repotFrequency"
+                                min="0"
+                                value={formData.repotFrequency}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all bg-slate-50 focus:bg-white"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-slate-700">Last Repotted Date</label>
+                            <input
+                                type="date"
+                                name="lastRepottedDate"
+                                value={formData.lastRepottedDate}
                                 onChange={handleChange}
                                 className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all bg-slate-50 focus:bg-white text-slate-700"
                             />

@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import api from '../services/api';
+import { initPushNotifications, unsubscribePush } from '../services/pushService';
 
 export const AuthContext = createContext();
 
@@ -10,7 +11,9 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
-            setUser(JSON.parse(storedUser));
+            const parsedUser = JSON.parse(storedUser);
+            setUser(parsedUser);
+            initPushNotifications(parsedUser._id);
         }
         setLoading(false);
     }, []);
@@ -20,6 +23,7 @@ export const AuthProvider = ({ children }) => {
         if (res.data) {
             localStorage.setItem('user', JSON.stringify(res.data));
             setUser(res.data);
+            initPushNotifications(res.data._id, true);
         }
         return res.data;
     };
@@ -29,6 +33,7 @@ export const AuthProvider = ({ children }) => {
         if (res.data) {
             localStorage.setItem('user', JSON.stringify(res.data));
             setUser(res.data);
+            initPushNotifications(res.data._id);
         }
         return res.data;
     };
@@ -36,6 +41,8 @@ export const AuthProvider = ({ children }) => {
     const logout = () => {
         localStorage.removeItem('user');
         setUser(null);
+        // Optional: unsubscribe Push to stop receiving messages when logged out
+        // unsubscribePush();
     };
 
     return (

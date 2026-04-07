@@ -1,8 +1,9 @@
 const Plant = require('../models/Plant');
 
 // Helper to add days to a date string/object
-const computeNextWaterDate = (lastWateredDate, frequencyInDays) => {
-    const nextDate = new Date(lastWateredDate);
+const computeNextDate = (lastDate, frequencyInDays) => {
+    if (!lastDate || !frequencyInDays) return null;
+    const nextDate = new Date(lastDate);
     nextDate.setDate(nextDate.getDate() + parseInt(frequencyInDays));
     return nextDate;
 };
@@ -42,13 +43,20 @@ const getPlantById = async (req, res) => {
 // @access  Private
 const addPlant = async (req, res) => {
     try {
-        const { plantName, plantType, wateringFrequency, lastWateredDate, notes, image } = req.body;
+        const { 
+            plantName, plantType, wateringFrequency, lastWateredDate, 
+            fertilizeFrequency, lastFertilizedDate,
+            repotFrequency, lastRepottedDate,
+            notes, image 
+        } = req.body;
 
         if (!plantName || !plantType || !wateringFrequency || !lastWateredDate) {
             return res.status(400).json({ message: 'Please add all required fields' });
         }
 
-        const nextWaterDate = computeNextWaterDate(lastWateredDate, wateringFrequency);
+        const nextWaterDate = computeNextDate(lastWateredDate, wateringFrequency);
+        const nextFertilizeDate = computeNextDate(lastFertilizedDate, fertilizeFrequency);
+        const nextRepotDate = computeNextDate(lastRepottedDate, repotFrequency);
 
         const plant = await Plant.create({
             plantName,
@@ -56,6 +64,12 @@ const addPlant = async (req, res) => {
             wateringFrequency,
             lastWateredDate,
             nextWaterDate,
+            fertilizeFrequency,
+            lastFertilizedDate,
+            nextFertilizeDate,
+            repotFrequency,
+            lastRepottedDate,
+            nextRepotDate,
             notes,
             image,
             userId: req.user.id,
@@ -88,7 +102,21 @@ const updatePlant = async (req, res) => {
         if (updateData.lastWateredDate || updateData.wateringFrequency) {
             const passedLastWatered = updateData.lastWateredDate || plant.lastWateredDate;
             const passedFreq = updateData.wateringFrequency || plant.wateringFrequency;
-            updateData.nextWaterDate = computeNextWaterDate(passedLastWatered, passedFreq);
+            updateData.nextWaterDate = computeNextDate(passedLastWatered, passedFreq);
+        }
+
+        // if fertilization fields updated
+        if (updateData.lastFertilizedDate || updateData.fertilizeFrequency !== undefined) {
+            const passedLastFert = updateData.lastFertilizedDate || plant.lastFertilizedDate;
+            const passedFertFreq = updateData.fertilizeFrequency !== undefined ? updateData.fertilizeFrequency : plant.fertilizeFrequency;
+            updateData.nextFertilizeDate = computeNextDate(passedLastFert, passedFertFreq);
+        }
+
+        // if repot fields updated
+        if (updateData.lastRepottedDate || updateData.repotFrequency !== undefined) {
+            const passedLastRepot = updateData.lastRepottedDate || plant.lastRepottedDate;
+            const passedRepotFreq = updateData.repotFrequency !== undefined ? updateData.repotFrequency : plant.repotFrequency;
+            updateData.nextRepotDate = computeNextDate(passedLastRepot, passedRepotFreq);
         }
 
         const updatedPlant = await Plant.findByIdAndUpdate(req.params.id, updateData, { new: true });

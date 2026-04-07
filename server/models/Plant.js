@@ -26,6 +26,26 @@ const plantSchema = new mongoose.Schema({
         type: Date,
         required: true,
     },
+    fertilizeFrequency: {
+        type: Number,
+        default: 0, // 0 means no fertilization tracking
+    },
+    lastFertilizedDate: {
+        type: Date,
+    },
+    nextFertilizeDate: {
+        type: Date,
+    },
+    repotFrequency: {
+        type: Number,
+        default: 0, // in days, e.g., 365
+    },
+    lastRepottedDate: {
+        type: Date,
+    },
+    nextRepotDate: {
+        type: Date,
+    },
     notes: {
         type: String,
         default: '',

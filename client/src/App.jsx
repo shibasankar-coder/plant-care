@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import Navbar from './components/Navbar';
 // We will create these pages next
@@ -9,6 +9,12 @@ import Dashboard from './pages/Dashboard';
 import AddPlant from './pages/AddPlant';
 import EditPlant from './pages/EditPlant';
 import PlantDetails from './pages/PlantDetails';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
+import Feedback from './pages/Feedback';
+import Footer from './components/Footer';
 
 const PrivateRoute = ({ children }) => {
     const { user, loading } = useContext(AuthContext);
@@ -17,11 +23,18 @@ const PrivateRoute = ({ children }) => {
 };
 
 function AppRoutes() {
+    const location = useLocation();
+    const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col">
             <Navbar />
-            <main className="flex-grow container mx-auto px-4 py-8 max-w-5xl">
+            <main className={`flex-grow ${isAuthPage ? '' : 'container mx-auto px-4 py-8 max-w-5xl'}`}>
                 <Routes>
+                    <Route path="/about" element={<About />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route path="/terms-of-service" element={<TermsOfService />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                     <Route 
@@ -56,8 +69,17 @@ function AppRoutes() {
                             </PrivateRoute>
                         } 
                     />
+                    <Route 
+                        path="/feedback" 
+                        element={
+                            <PrivateRoute>
+                                <Feedback />
+                            </PrivateRoute>
+                        } 
+                    />
                 </Routes>
             </main>
+            <Footer />
         </div>
     );
 }

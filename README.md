@@ -1,7 +1,7 @@
 <<<<<<< HEAD
 # plant-care-app
 =======
-# Plant Care Reminder App
+# Plant Care Reminder Reminder App
 
 A complete full-stack web application designed to help users manage their plants and receive visual reminders when they need watering.
 

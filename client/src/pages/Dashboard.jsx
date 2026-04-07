@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import PlantCard from '../components/PlantCard';
-import { calculateDaysUntilWatering } from '../utils/dateUtils';
 import { Plus, Bell, Sprout } from 'lucide-react';
+import { initPushNotifications } from '../services/pushService';
+import { AuthContext } from '../context/AuthContext';
+import { calculateDaysUntilWatering } from '../utils/dateUtils';
 
 const Dashboard = () => {
     const [plants, setPlants] = useState([]);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({ total: 0, needsWater: 0 });
+    const { user } = React.useContext(AuthContext);
 
     const fetchPlants = async () => {
         try {
@@ -38,6 +41,26 @@ const Dashboard = () => {
         }
     };
 
+    const handleFertilizeToday = async (id) => {
+        try {
+            const today = new Date().toISOString();
+            await api.put(`/plants/${id}`, { lastFertilizedDate: today });
+            fetchPlants(); // refresh
+        } catch (error) {
+            console.error('Error updating plant', error);
+        }
+    };
+
+    const handleRepotToday = async (id) => {
+        try {
+            const today = new Date().toISOString();
+            await api.put(`/plants/${id}`, { lastRepottedDate: today });
+            fetchPlants(); // refresh
+        } catch (error) {
+            console.error('Error updating plant', error);
+        }
+    };
+
     if (loading) return (
         <div className="flex h-64 items-center justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
@@ -53,8 +76,20 @@ const Dashboard = () => {
                         <Sprout className="w-64 h-64" />
                     </div>
                     <div className="relative z-10">
-                        <h1 className="text-3xl font-bold mb-2">My Indoor Jungle</h1>
-                        <p className="text-emerald-100 text-lg mb-8 max-w-md">Keep track of your plant family and never forget to water them again.</p>
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h1 className="text-3xl font-bold mb-2">My Indoor Jungle</h1>
+                                <p className="text-emerald-100 text-lg mb-8 max-w-md">Keep track of your plant family and never forget to water them again.</p>
+                            </div>
+                            <div>
+                                <button 
+                                    onClick={() => initPushNotifications(user?._id, true)} 
+                                    className="bg-white text-emerald-600 hover:bg-emerald-50 transition font-bold px-6 py-3 rounded-xl flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-1 animate-pulse"
+                                >
+                                    <Bell className="w-5 h-5 fill-emerald-600" /> Enable Notifications
+                                </button>
+                            </div>
+                        </div>
                         
                         <div className="flex gap-4">
                             <div className="bg-white/20 backdrop-blur-md rounded-2xl px-6 py-4 border border-white/20">
@@ -105,6 +140,8 @@ const Dashboard = () => {
                                 key={plant._id} 
                                 plant={plant} 
                                 onWaterToday={handleWaterToday} 
+                                onFertilizeToday={handleFertilizeToday}
+                                onRepotToday={handleRepotToday}
                             />
                         ))}
                     </div>

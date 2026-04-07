@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
-import { calculateDaysUntilWatering, getWateringStatus, formatDate } from '../utils/dateUtils';
-import { Leaf, ArrowLeft, Edit3, Droplets, CalendarDays, History, Info } from 'lucide-react';
+import { calculateDaysUntil, getActionStatus, formatDate } from '../utils/dateUtils';
+import { Leaf, ArrowLeft, Edit3, Droplets, CalendarDays, History, Info, Box } from 'lucide-react';
 
 const PlantDetails = () => {
     const { id } = useParams();
@@ -35,6 +35,26 @@ const PlantDetails = () => {
         }
     };
 
+    const handleFertilizeToday = async () => {
+        try {
+            const today = new Date().toISOString();
+            await api.put(`/plants/${id}`, { lastFertilizedDate: today });
+            fetchPlant(); // refresh
+        } catch (error) {
+            console.error('Error updating plant', error);
+        }
+    };
+
+    const handleRepotToday = async () => {
+        try {
+            const today = new Date().toISOString();
+            await api.put(`/plants/${id}`, { lastRepottedDate: today });
+            fetchPlant(); // refresh
+        } catch (error) {
+            console.error('Error updating plant', error);
+        }
+    };
+
     if (loading) return (
         <div className="flex justify-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
@@ -44,8 +64,14 @@ const PlantDetails = () => {
     if (error) return <div className="text-center text-red-500 py-10 font-medium">{error}</div>;
     if (!plant) return <div className="text-center text-slate-500 py-10 font-medium">Plant not found</div>;
 
-    const daysUntil = calculateDaysUntilWatering(plant.nextWaterDate);
-    const status = getWateringStatus(daysUntil);
+    const waterDaysUntil = calculateDaysUntil(plant.nextWaterDate);
+    const waterStatus = getActionStatus(waterDaysUntil, 'Water');
+
+    const fertDaysUntil = plant.fertilizeFrequency > 0 ? calculateDaysUntil(plant.nextFertilizeDate) : null;
+    const fertStatus = fertDaysUntil !== null ? getActionStatus(fertDaysUntil, 'Fertilize') : null;
+
+    const repotDaysUntil = plant.repotFrequency > 0 ? calculateDaysUntil(plant.nextRepotDate) : null;
+    const repotStatus = repotDaysUntil !== null ? getActionStatus(repotDaysUntil, 'Repot') : null;
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
@@ -82,8 +108,20 @@ const PlantDetails = () => {
                                 <h1 className="text-4xl font-bold text-slate-800 mb-2">{plant.plantName}</h1>
                                 <p className="text-xl text-emerald-600 font-medium">{plant.plantType}</p>
                             </div>
-                            <div className={`px-4 py-2 rounded-full font-bold border ${status.bg} ${status.color} ${status.border} shadow-sm`}>
-                                {status.label}
+                            <div className="flex gap-2 flex-col items-end">
+                                <div className={`px-4 py-2 rounded-full font-bold border ${waterStatus.bg} ${waterStatus.color} ${waterStatus.border} shadow-sm inline-block`}>
+                                    {waterStatus.label}
+                                </div>
+                                {fertStatus && (
+                                    <div className={`px-3 py-1.5 rounded-full text-xs font-bold border ${fertStatus.bg} ${fertStatus.color} ${fertStatus.border} shadow-sm inline-block`}>
+                                        {fertStatus.label}
+                                    </div>
+                                )}
+                                {repotStatus && (
+                                    <div className={`px-3 py-1.5 rounded-full text-xs font-bold border ${repotStatus.bg} ${repotStatus.color} ${repotStatus.border} shadow-sm inline-block`}>
+                                        {repotStatus.label}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -107,17 +145,46 @@ const PlantDetails = () => {
                         </div>
 
                         {/* Action Area */}
-                        <div className="bg-emerald-50 rounded-2xl p-6 border border-emerald-100 flex items-center justify-between">
-                            <div>
-                                <h3 className="font-bold text-emerald-800">Did you water it today?</h3>
-                                <p className="text-sm text-emerald-600 mt-1">Update the schedule automatically.</p>
+                        <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                            <div className="bg-emerald-50 rounded-2xl p-6 border border-emerald-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <div>
+                                    <h3 className="font-bold text-emerald-800 flex items-center"><Droplets className="w-5 h-5 mr-2" /> Did you water it today?</h3>
+                                </div>
+                                <button 
+                                    onClick={handleWaterToday}
+                                    className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-md"
+                                >
+                                    Water Now
+                                </button>
                             </div>
-                            <button 
-                                onClick={handleWaterToday}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-md flex items-center"
-                            >
-                                <Droplets className="w-5 h-5 mr-2" /> Water Now
-                            </button>
+
+                            {plant.fertilizeFrequency > 0 && (
+                                <div className="bg-lime-50 rounded-2xl p-6 border border-lime-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <div>
+                                        <h3 className="font-bold text-lime-800 flex items-center"><Leaf className="w-5 h-5 mr-2" /> Did you fertilize it today?</h3>
+                                    </div>
+                                    <button 
+                                        onClick={handleFertilizeToday}
+                                        className="w-full sm:w-auto bg-lime-600 hover:bg-lime-700 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-md"
+                                    >
+                                        Fertilize Now
+                                    </button>
+                                </div>
+                            )}
+
+                            {plant.repotFrequency > 0 && (
+                                <div className="bg-amber-50 rounded-2xl p-6 border border-amber-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <div>
+                                        <h3 className="font-bold text-amber-800 flex items-center"><Box className="w-5 h-5 mr-2" /> Did you repot it today?</h3>
+                                    </div>
+                                    <button 
+                                        onClick={handleRepotToday}
+                                        className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-md"
+                                    >
+                                        Repot Now
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
 
