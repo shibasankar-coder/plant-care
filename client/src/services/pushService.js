@@ -1,7 +1,7 @@
-import axios from 'axios';
+import api from './api';
 
-// URL base for backend
-const API_URL = 'http://localhost:5000/api/push';
+// URL base for backend is handled by api instance
+const PUSH_API_URL = '/push';
 
 // Helper to convert base64 VAPID key to Uint8Array
 function urlBase64ToUint8Array(base64String) {
@@ -67,7 +67,7 @@ export const initPushNotifications = async (userId = null, showAlertDialog = fal
         }
 
         // 5. Send to backend
-        await axios.post(`${API_URL}/subscribe`, {
+        await api.post(`${PUSH_API_URL}/subscribe`, {
             subscription,
             anonymousId,
             userId,
@@ -85,7 +85,7 @@ export const initPushNotifications = async (userId = null, showAlertDialog = fal
 export const testPushNotification = async (userId = null) => {
     try {
         const anonymousId = localStorage.getItem('plant_care_anon_id');
-        await axios.post(`${API_URL}/test`, {
+        await api.post(`${PUSH_API_URL}/test`, {
             userId,
             anonymousId
         });
@@ -102,7 +102,7 @@ export const unsubscribePush = async () => {
         const register = await navigator.serviceWorker.ready;
         const subscription = await register.pushManager.getSubscription();
         if (subscription) {
-            await axios.post(`${API_URL}/unsubscribe`, { endpoint: subscription.endpoint });
+            await api.post(`${PUSH_API_URL}/unsubscribe`, { endpoint: subscription.endpoint });
             await subscription.unsubscribe();
             console.log('Unsubscribed from push notifications');
         }
