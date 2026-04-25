@@ -58,7 +58,7 @@ const checkAndSendReminders = async () => {
             if (subscriptions.length > 0) {
                 const baseUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
                 const pushUrl = `${baseUrl}/dashboard`;
-                console.log(`Sending Push Notification with URL: ${pushUrl}`);
+                console.log(`Sending Push Notification with Absolute URL: ${pushUrl}`);
 
                 const payload = JSON.stringify({
                     title: 'Plant Care Reminder 🌿',

@@ -189,18 +189,8 @@ const Profile = () => {
                             )}
                         </button>
                         
-                        <button
-                            type="button"
-                            onClick={sendCareReport}
-                            disabled={loading || deleting || demoLoading}
-                            className="md:w-auto px-6 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white font-bold py-4 rounded-2xl transition-all border border-emerald-100 hover:border-emerald-600 flex items-center justify-center gap-2 disabled:opacity-70"
-                        >
-                            {demoLoading ? (
-                                <div className="w-5 h-5 border-2 border-emerald-300 border-t-emerald-600 rounded-full animate-spin"></div>
-                            ) : (
-                                <><Bell className="w-5 h-5" /> Send Care Report</>
-                            )}
-                        </button>
+
+
 
 
                         <button
