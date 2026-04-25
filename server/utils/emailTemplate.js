@@ -110,7 +110,60 @@ const getCareReportTemplate = (userName, tasks, frontendUrl) => {
     `;
 };
 
-module.exports = { getCareReportTemplate };
+/**
+ * Generates a beautiful welcome email for new registrations.
+ */
+const getWelcomeTemplate = (userName, frontendUrl) => {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Plant Care</title>
+</head>
+<body style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1a202c; margin: 0; padding: 0; background-color: #004F3B;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #004F3B; padding: 60px 0;">
+        <tr>
+            <td align="center" valign="middle">
+                <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background-color: #fcfefc; border-radius: 48px; overflow: hidden; box-shadow: 0 50px 100px rgba(0,0,0,0.4);">
+                    <tr>
+                        <td align="center" style="background-color: #009966; padding: 70px 40px; border-bottom: 6px solid #fbbf24;">
+                            <div style="background: #fbbf24; color: #004F3B; display: inline-block; padding: 6px 16px; border-radius: 50px; font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 20px;">Welcome Home</div>
+                            <h1 style="color: #ffffff; margin: 0; font-size: 40px; font-weight: 900; letter-spacing: -0.05em; line-height: 1;">Welcome to the Jungle! 🌿</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="padding: 60px 50px;">
+                            <h2 style="font-size: 28px; color: #004F3B; margin: 0 0 20px 0; font-weight: 800;">Hi ${userName},</h2>
+                            <p style="font-size: 18px; color: #4a5568; margin-bottom: 45px; max-width: 450px;">
+                                We're so excited to help you care for your green friends. You've taken the first step towards a thriving indoor sanctuary!
+                            </p>
+                            <div style="margin-top: 50px; display: flex; justify-content: center;">
+                                <a href="${frontendUrl}" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #004F3B; padding: 22px 50px; border-radius: 100px; text-decoration: none; font-size: 20px; font-weight: 900; box-shadow: 0 15px 30px rgba(251, 191, 36, 0.4); display: inline-block; text-transform: uppercase; letter-spacing: 0.05em;">Start Your Jungle</a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="padding: 60px 40px; background-color: #009966; border-top: 6px solid #004F3B;">
+                            <div style="font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.3em; color: #ffffff; margin-bottom: 25px; opacity: 0.9;">Plant Care Reminder</div>
+                            <p style="margin: 0; font-size: 15px; color: #00291fff; line-height: 1.8;">
+                                Helping your plants thrive, one drop at a time.<br/>
+                                <span style="display: block; margin-top: 25px; color: #ffffff; font-weight: 700; opacity: 1;">Developed with ❤️ by Dharma and Shiba</span>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+    `;
+};
+
+module.exports = { getCareReportTemplate, getWelcomeTemplate };
+
 
 
 

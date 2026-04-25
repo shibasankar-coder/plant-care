@@ -1,6 +1,9 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { sendEmail } = require('../services/emailService');
+const { getWelcomeTemplate } = require('../utils/emailTemplate');
+
 
 // Generate JWT
 const generateToken = (id) => {
@@ -37,6 +40,17 @@ const registerUser = async (req, res) => {
         });
 
         if (user) {
+            // Send Welcome Email
+            if (process.env.EMAIL_USER) {
+                try {
+                    const welcomeHtml = getWelcomeTemplate(user.name, process.env.FRONTEND_URL || 'http://localhost:5173');
+                    await sendEmail(user.email, 'Welcome to your new Jungle! 🌿', welcomeHtml);
+                    console.log(`Welcome email sent to ${user.email}`);
+                } catch (emailErr) {
+                    console.error('Welcome email failed to send:', emailErr.message);
+                }
+            }
+
             res.status(201).json({
                 _id: user.id,
                 name: user.name,
@@ -45,6 +59,7 @@ const registerUser = async (req, res) => {
                 token: generateToken(user._id),
             });
         } else {
+
             res.status(400).json({ message: 'Invalid user data' });
         }
     } catch (error) {
