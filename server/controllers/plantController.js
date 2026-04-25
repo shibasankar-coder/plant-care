@@ -47,8 +47,9 @@ const addPlant = async (req, res) => {
             plantName, plantType, wateringFrequency, lastWateredDate, 
             fertilizeFrequency, lastFertilizedDate,
             repotFrequency, lastRepottedDate,
-            notes, image 
+            notes, careTips, image 
         } = req.body;
+
 
         if (!plantName || !plantType || !wateringFrequency || !lastWateredDate) {
             return res.status(400).json({ message: 'Please add all required fields' });
@@ -71,8 +72,10 @@ const addPlant = async (req, res) => {
             lastRepottedDate,
             nextRepotDate,
             notes,
+            careTips,
             image,
             userId: req.user.id,
+
         });
 
         res.status(201).json(plant);

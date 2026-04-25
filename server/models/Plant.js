@@ -46,10 +46,15 @@ const plantSchema = new mongoose.Schema({
     nextRepotDate: {
         type: Date,
     },
+    careTips: {
+        type: String,
+        default: '',
+    },
     notes: {
         type: String,
         default: '',
     },
+
     image: {
         type: String,
         default: '',

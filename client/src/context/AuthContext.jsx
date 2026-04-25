@@ -28,8 +28,8 @@ export const AuthProvider = ({ children }) => {
         return res.data;
     };
 
-    const register = async (name, email, password) => {
-        const res = await api.post('/auth/register', { name, email, password });
+    const register = async (name, email, password, image = '') => {
+        const res = await api.post('/auth/register', { name, email, password, image });
         if (res.data) {
             localStorage.setItem('user', JSON.stringify(res.data));
             setUser(res.data);
@@ -38,15 +38,36 @@ export const AuthProvider = ({ children }) => {
         return res.data;
     };
 
+    const updateProfile = async (updates) => {
+        const res = await api.put('/auth/profile', updates);
+        if (res.data) {
+            const updatedUser = { ...user, ...res.data };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            setUser(updatedUser);
+        }
+        return res.data;
+    };
+
     const logout = () => {
         localStorage.removeItem('user');
         setUser(null);
-        // Optional: unsubscribe Push to stop receiving messages when logged out
-        // unsubscribePush();
+    };
+
+    const deleteAccount = async () => {
+        try {
+            await api.delete('/auth/profile');
+            logout();
+        } catch (error) {
+            console.error('Failed to delete account', error);
+            throw error;
+        }
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+        <AuthContext.Provider value={{ user, login, register, updateProfile, deleteAccount, logout, loading }}>
+
+
+
             {children}
         </AuthContext.Provider>
     );

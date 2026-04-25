@@ -14,7 +14,9 @@ import Contact from './pages/Contact';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import Feedback from './pages/Feedback';
+import Profile from './pages/Profile';
 import Footer from './components/Footer';
+
 
 const PrivateRoute = ({ children }) => {
     const { user, loading } = useContext(AuthContext);
@@ -77,7 +79,16 @@ function AppRoutes() {
                             </PrivateRoute>
                         } 
                     />
+                    <Route 
+                        path="/profile" 
+                        element={
+                            <PrivateRoute>
+                                <Profile />
+                            </PrivateRoute>
+                        } 
+                    />
                 </Routes>
+
             </main>
             <Footer />
         </div>

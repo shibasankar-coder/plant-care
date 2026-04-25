@@ -14,7 +14,7 @@ const PlantCard = ({ plant, onWaterToday, onFertilizeToday, onRepotToday }) => {
     const repotStatus = repotDaysUntil !== null ? getActionStatus(repotDaysUntil, 'Repot') : null;
 
     return (
-        <div className={`relative bg-white rounded-2xl p-5 shadow-sm border transition-shadow hover:shadow-md flex flex-col ${waterStatus.border}`}>
+        <div className={`relative bg-white rounded-2xl p-5 shadow-sm border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-emerald-300 flex flex-col ${waterStatus.border}`}>
             {/* Status Badges */}
             <div className="absolute -top-3 right-2 flex gap-1 flex-col items-end z-10">
                 <div className={`px-3 py-1 rounded-full text-xs font-bold border ${waterStatus.bg} ${waterStatus.color} ${waterStatus.border} shadow-sm`}>
@@ -32,8 +32,8 @@ const PlantCard = ({ plant, onWaterToday, onFertilizeToday, onRepotToday }) => {
                 )}
             </div>
 
-            <div className="flex items-start gap-4 mb-4 mt-2">
-                <div className="w-16 h-16 rounded-xl bg-emerald-100 flex-shrink-0 flex items-center justify-center overflow-hidden z-0">
+            <Link to={`/plant/${plant._id}`} className="flex items-start gap-4 mb-4 mt-2 group/header">
+                <div className="w-16 h-16 rounded-xl bg-emerald-100 flex-shrink-0 flex items-center justify-center overflow-hidden z-0 group-hover/header:ring-2 group-hover/header:ring-emerald-400 transition-all">
                     {plant.image ? (
                         <img src={plant.image} alt={plant.plantName} className="object-cover w-full h-full" />
                     ) : (
@@ -41,10 +41,11 @@ const PlantCard = ({ plant, onWaterToday, onFertilizeToday, onRepotToday }) => {
                     )}
                 </div>
                 <div>
-                    <h3 className="text-lg font-bold text-slate-800 line-clamp-1 pr-6">{plant.plantName}</h3>
+                    <h3 className="text-lg font-bold text-slate-800 line-clamp-1 pr-6 group-hover/header:text-emerald-600 transition-colors">{plant.plantName}</h3>
                     <p className="text-sm text-slate-500 font-medium">{plant.plantType}</p>
                 </div>
-            </div>
+            </Link>
+
 
             <div className="space-y-1.5 mb-5 flex-grow text-xs text-slate-600">
                 <div className="flex items-center gap-2">

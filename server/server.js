@@ -25,6 +25,8 @@ app.use("/api/plants", require("./routes/plantRoutes"));
 app.use("/api/contact", require("./routes/contactRoutes"));
 app.use("/api/feedback", require("./routes/feedbackRoutes"));
 app.use("/api/push", require("./routes/pushRoutes"));
+app.use("/api/ai", require("./routes/aiRoutes"));
+
 
 const { startReminderCron } = require("./cron/reminderJobs");
 startReminderCron();

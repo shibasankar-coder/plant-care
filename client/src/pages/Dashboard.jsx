@@ -2,15 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import PlantCard from '../components/PlantCard';
-import { Plus, Bell, Sprout } from 'lucide-react';
+import { Plus, Bell, Sprout, X } from 'lucide-react';
+
 import { initPushNotifications } from '../services/pushService';
 import { AuthContext } from '../context/AuthContext';
-import { calculateDaysUntilWatering } from '../utils/dateUtils';
+import { calculateDaysUntil } from '../utils/dateUtils';
+
 
 const Dashboard = () => {
     const [plants, setPlants] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [stats, setStats] = useState({ total: 0, needsWater: 0 });
+    const [stats, setStats] = useState({ total: 0, needsWater: 0, needsFertilize: 0, needsRepot: 0 });
+    const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'water', 'fertilize', 'repot'
+    const plantListRef = React.useRef(null);
+
+    const scrollToPlants = () => {
+        setTimeout(() => {
+            plantListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    };
+
+    const handleFilterClick = (filter) => {
+        setActiveFilter(filter);
+        scrollToPlants();
+    };
+
+
+
     const { user } = React.useContext(AuthContext);
 
     const fetchPlants = async () => {
@@ -18,8 +36,12 @@ const Dashboard = () => {
             const res = await api.get('/plants');
             setPlants(res.data);
             
-            const needsWater = res.data.filter(p => calculateDaysUntilWatering(p.nextWaterDate) <= 0).length;
-            setStats({ total: res.data.length, needsWater });
+            const needsWater = res.data.filter(p => calculateDaysUntil(p.nextWaterDate) <= 0).length;
+            const needsFertilize = res.data.filter(p => p.fertilizeFrequency > 0 && calculateDaysUntil(p.nextFertilizeDate) <= 0).length;
+            const needsRepot = res.data.filter(p => p.repotFrequency > 0 && calculateDaysUntil(p.nextRepotDate) <= 0).length;
+            setStats({ total: res.data.length, needsWater, needsFertilize, needsRepot });
+
+
         } catch (error) {
             console.error('Error fetching plants', error);
         } finally {
@@ -91,16 +113,40 @@ const Dashboard = () => {
                             </div>
                         </div>
                         
-                        <div className="flex gap-4">
-                            <div className="bg-white/20 backdrop-blur-md rounded-2xl px-6 py-4 border border-white/20">
+                        <div className="flex flex-wrap gap-4">
+                            <div 
+                                onClick={() => handleFilterClick('all')}
+                                className={`bg-white/20 backdrop-blur-md rounded-2xl px-6 py-4 border cursor-pointer transition-all hover:scale-105 ${activeFilter === 'all' ? 'border-white bg-white/30 ring-2 ring-white/20' : 'border-white/20'}`}
+                            >
                                 <div className="text-sm font-medium text-emerald-100 uppercase tracking-wider mb-1">Total Plants</div>
                                 <div className="text-3xl font-bold">{stats.total}</div>
                             </div>
-                            <div className="bg-white/20 backdrop-blur-md rounded-2xl px-6 py-4 border border-white/20">
-                                <div className="text-sm font-medium text-orange-200 uppercase tracking-wider mb-1">Needs Water</div>
+                            <div 
+                                onClick={() => handleFilterClick('water')}
+                                className={`bg-white/20 backdrop-blur-md rounded-2xl px-6 py-4 border cursor-pointer transition-all hover:scale-105 ${activeFilter === 'water' ? 'border-orange-300 bg-white/30 ring-2 ring-orange-300/20' : 'border-white/20'}`}
+                            >
+                                <div className="text-sm font-medium text-orange-100 uppercase tracking-wider mb-1">Needs Water</div>
                                 <div className="text-3xl font-bold text-orange-300">{stats.needsWater}</div>
                             </div>
+                            <div 
+                                onClick={() => handleFilterClick('fertilize')}
+                                className={`bg-white/20 backdrop-blur-md rounded-2xl px-6 py-4 border cursor-pointer transition-all hover:scale-105 ${activeFilter === 'fertilize' ? 'border-lime-300 bg-white/30 ring-2 ring-lime-300/20' : 'border-white/20'}`}
+                            >
+                                <div className="text-sm font-medium text-lime-100 uppercase tracking-wider mb-1">Needs Fertilizer</div>
+                                <div className="text-3xl font-bold text-lime-300">{stats.needsFertilize}</div>
+                            </div>
+                            <div 
+                                onClick={() => handleFilterClick('repot')}
+                                className={`bg-white/20 backdrop-blur-md rounded-2xl px-6 py-4 border cursor-pointer transition-all hover:scale-105 ${activeFilter === 'repot' ? 'border-amber-300 bg-white/30 ring-2 ring-amber-300/20' : 'border-white/20'}`}
+                            >
+                                <div className="text-sm font-medium text-amber-100 uppercase tracking-wider mb-1">Needs Repot</div>
+                                <div className="text-3xl font-bold text-amber-300">{stats.needsRepot}</div>
+                            </div>
+
+
+
                         </div>
+
                     </div>
                 </div>
 
@@ -115,11 +161,25 @@ const Dashboard = () => {
             </div>
 
             {/* Content Section */}
-            <div>
+            <div ref={plantListRef} className="scroll-mt-24">
+
+
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        <Bell className="w-6 h-6 text-emerald-500" /> Reminders
+                        {activeFilter === 'all' && <><Bell className="w-6 h-6 text-emerald-500" /> Reminders</>}
+                        {activeFilter === 'water' && <><Bell className="w-6 h-6 text-orange-500" /> Needs Watering</>}
+                        {activeFilter === 'fertilize' && <><Bell className="w-6 h-6 text-lime-500" /> Needs Fertilizer</>}
+                        {activeFilter === 'repot' && <><Bell className="w-6 h-6 text-amber-500" /> Needs Repotting</>}
                     </h2>
+                    {activeFilter !== 'all' && (
+                        <button 
+                            onClick={() => handleFilterClick('all')}
+                            className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-3 py-1.5 rounded-full transition-all border border-emerald-200 shadow-sm"
+                        >
+                            <X className="w-3.5 h-3.5" /> Clear Filter
+                        </button>
+                    )}
+
                 </div>
                 
                 {plants.length === 0 ? (
@@ -135,17 +195,26 @@ const Dashboard = () => {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {plants.map(plant => (
-                            <PlantCard 
-                                key={plant._id} 
-                                plant={plant} 
-                                onWaterToday={handleWaterToday} 
-                                onFertilizeToday={handleFertilizeToday}
-                                onRepotToday={handleRepotToday}
-                            />
-                        ))}
+                        {plants
+                            .filter(plant => {
+                                if (activeFilter === 'all') return true;
+                                if (activeFilter === 'water') return calculateDaysUntil(plant.nextWaterDate) <= 0;
+                                if (activeFilter === 'fertilize') return plant.fertilizeFrequency > 0 && calculateDaysUntil(plant.nextFertilizeDate) <= 0;
+                                if (activeFilter === 'repot') return plant.repotFrequency > 0 && calculateDaysUntil(plant.nextRepotDate) <= 0;
+                                return true;
+                            })
+                            .map(plant => (
+                                <PlantCard 
+                                    key={plant._id} 
+                                    plant={plant} 
+                                    onWaterToday={handleWaterToday} 
+                                    onFertilizeToday={handleFertilizeToday}
+                                    onRepotToday={handleRepotToday}
+                                />
+                            ))}
                     </div>
                 )}
+
             </div>
         </div>
     );

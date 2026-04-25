@@ -1,7 +1,8 @@
 import React, { useContext, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { Leaf, LogOut, Menu, X } from 'lucide-react';
+import { Leaf, LogOut, Menu, X, User as UserIcon } from 'lucide-react';
+
 
 const Navbar = () => {
     const { user, logout } = useContext(AuthContext);
@@ -53,7 +54,17 @@ const Navbar = () => {
                     <div className="hidden md:flex items-center">
                         {user ? (
                             <div className="flex items-center gap-4">
-                                <span className="text-white font-medium">Hello, {user.name}</span>
+                                <Link to="/profile" className="flex items-center gap-2 text-white hover:bg-emerald-500 px-3 py-1.5 rounded-full transition-all group">
+                                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center overflow-hidden border border-white/50 group-hover:border-white">
+                                        {user.image ? (
+                                            <img src={user.image} alt="Profile" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <UserIcon className="w-5 h-5 text-emerald-600" />
+                                        )}
+                                    </div>
+                                    <span className="font-bold">{user.name}</span>
+
+                                </Link>
                                 <button
                                     onClick={handleLogout}
                                     className="flex items-center text-emerald-100 hover:text-white transition-colors p-2 rounded-md hover:bg-emerald-500"
@@ -63,6 +74,7 @@ const Navbar = () => {
                                 </button>
                             </div>
                         ) : (
+
                             <div className="flex gap-4 items-center">
                                 <Link to="/login" className={getLinkClass('/login')}>Login</Link>
                                 <Link to="/register" className="bg-white text-emerald-600 hover:bg-emerald-50 px-4 py-2 rounded-md font-bold shadow-sm transition-colors">Register</Link>
@@ -98,9 +110,19 @@ const Navbar = () => {
                         
                         {user ? (
                             <>
-                                <div className="px-3 py-2 text-emerald-100 font-medium border-t border-emerald-500 mt-2 pt-2">
-                                    Hello, {user.name}
-                                </div>
+                                <Link to="/profile" className="flex items-center gap-2 px-3 py-2 text-white hover:bg-emerald-500 rounded-md transition-colors" onClick={closeMobileMenu}>
+                                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center overflow-hidden border border-white/50">
+                                        {user.image ? (
+                                            <img src={user.image} alt="Profile" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <UserIcon className="w-5 h-5 text-emerald-600" />
+                                        )}
+                                    </div>
+                                    <span className="font-bold">{user.name}</span>
+
+                                </Link>
+
+
                                 <button
                                     onClick={handleLogout}
                                     className="w-full text-left flex items-center text-emerald-50 hover:text-white hover:bg-emerald-500 px-3 py-2 rounded-md font-medium transition-colors"

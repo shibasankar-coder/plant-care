@@ -48,50 +48,104 @@ exports.subscribe = async (req, res) => {
     }
 };
 
-// Send test notification
+const User = require('../models/User');
+const Plant = require('../models/Plant');
+const { sendEmail } = require('../services/emailService');
+const { getCareReportTemplate } = require('../utils/emailTemplate');
+
+
+// Send actual care report now
 exports.sendTestPush = async (req, res) => {
     try {
-        const { anonymousId, userId } = req.body;
-        
-        // Find subscriptions for user
-        let query = {};
-        if (userId) query.userId = userId;
-        else if (anonymousId) query.anonymousId = anonymousId;
-        else return res.status(400).json({ error: 'Provide userId or anonymousId' });
+        const { userId } = req.body;
+        if (!userId) return res.status(400).json({ error: 'Provide userId' });
 
-        const subscriptions = await PushSubscription.find(query);
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ error: 'User not found' });
 
-        if (subscriptions.length === 0) {
-            return res.status(404).json({ error: 'No active subscriptions found for user' });
-        }
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
 
-        const payload = JSON.stringify({
-            title: 'Test Notification 🌿',
-            body: 'Web Push Notifications are working!',
-            icon: '/icon-192x192.png',
-            url: '/dashboard'
+        // Find plants needing attention today
+        const userPlants = await Plant.find({
+            userId,
+            $or: [
+                { nextWaterDate: { $lte: todayEnd } },
+                { nextFertilizeDate: { $lte: todayEnd } },
+                { nextRepotDate: { $lte: todayEnd } }
+            ]
         });
 
-        const sendPromises = subscriptions.map(async (sub) => {
+        if (userPlants.length === 0) {
+            return res.status(200).json({ message: 'No plants need care today! Your jungle is healthy.' });
+        }
+
+        const tasks = { water: [], fertilize: [], repot: [] };
+        userPlants.forEach(plant => {
+            if (plant.nextWaterDate <= todayEnd) tasks.water.push(plant.plantName);
+            if (plant.nextFertilizeDate && plant.nextFertilizeDate <= todayEnd) tasks.fertilize.push(plant.plantName);
+            if (plant.nextRepotDate && plant.nextRepotDate <= todayEnd) tasks.repot.push(plant.plantName);
+        });
+
+        const allTaskStrings = [
+            ...tasks.water.map(p => `💦 Water: ${p}`),
+            ...tasks.fertilize.map(p => `🧪 Fertilize: ${p}`),
+            ...tasks.repot.map(p => `🪴 Repot: ${p}`)
+        ];
+
+        // 1. Send Push
+        const subscriptions = await PushSubscription.find({ userId });
+        const baseUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+        const pushUrl = `${baseUrl}/dashboard`;
+        console.log(`Sending Manual Report Push with URL: ${pushUrl}`);
+
+        const payload = JSON.stringify({
+            title: 'Plant Care Report 🌿',
+            body: `You have ${allTaskStrings.length} tasks today:\n${allTaskStrings.slice(0, 3).join('\n')}`,
+            icon: '/icon-192x192.png',
+            url: pushUrl
+        });
+
+
+        
+        subscriptions.forEach(async (sub) => {
             try {
                 await webPush.sendNotification(sub, payload);
             } catch (err) {
                 if (err.statusCode === 410 || err.statusCode === 404) {
-                    console.log('Subscription expired/unregistered, deleting...', sub.endpoint);
                     await PushSubscription.deleteOne({ _id: sub._id });
-                } else {
-                    console.error('Failed to send push: ', err);
                 }
             }
         });
 
-        await Promise.all(sendPromises);
-        res.status(200).json({ message: 'Push sent to devices' });
+        // 2. Send Email
+        let emailSent = false;
+        if (process.env.EMAIL_USER && user.email) {
+            const taskHtml = getCareReportTemplate(
+                user.name, 
+                tasks, 
+                process.env.FRONTEND_URL || 'http://localhost:5173'
+            );
+            try {
+                await sendEmail(user.email, `🌿 Plant Care Tasks for Today (${allTaskStrings.length})`, taskHtml);
+                emailSent = true;
+            } catch (emailErr) {
+                console.error('Email report failed:', emailErr);
+            }
+        }
+
+        
+        res.status(200).json({ 
+            message: `Report sent for ${allTaskStrings.length} tasks!`,
+            emailSent
+        });
     } catch (error) {
-        console.error('Push test error:', error);
-        res.status(500).json({ error: 'Failed to send test push' });
+        console.error('Report send error:', error);
+        res.status(500).json({ error: 'Failed to send care report' });
     }
 };
+
+
 
 // Unsubscribe
 exports.unsubscribe = async (req, res) => {

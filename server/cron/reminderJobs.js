@@ -1,43 +1,73 @@
 const cron = require('node-cron');
 const Plant = require('../models/Plant');
+const User = require('../models/User');
 const PushSubscription = require('../models/PushSubscription');
 const webPush = require('web-push');
+const { sendEmail } = require('../services/emailService');
+const { getCareReportTemplate } = require('../utils/emailTemplate');
+
 
 const checkAndSendReminders = async () => {
-    console.log('Running plant reminder check...');
+    console.log('Running complex plant reminder check (Push + Email)...');
     try {
         const todayEnd = new Date();
         todayEnd.setHours(23, 59, 59, 999);
 
-        // Find plants whose nextWaterDate is today or earlier
-        const plantsToWater = await Plant.find({
-            nextWaterDate: { $lte: todayEnd }
-        });
+        // Find all plants needing attention today
+        const plantsToCare = await Plant.find({
+            $or: [
+                { nextWaterDate: { $lte: todayEnd } },
+                { nextFertilizeDate: { $lte: todayEnd } },
+                { nextRepotDate: { $lte: todayEnd } }
+            ]
+        }).populate('userId');
     
-        // Group notifications by userId
-        const notificationsMap = {};
+        // Group tasks by user
+        const userReminders = {};
 
-        plantsToWater.forEach(plant => {
+        plantsToCare.forEach(plant => {
             if (!plant.userId) return; 
-            const id = plant.userId.toString();
-            if (!notificationsMap[id]) {
-                notificationsMap[id] = [];
+            const userId = plant.userId._id.toString();
+            if (!userReminders[userId]) {
+                userReminders[userId] = {
+                    user: plant.userId,
+                    tasks: { water: [], fertilize: [], repot: [] }
+                };
             }
-            notificationsMap[id].push(`💦 ${plant.plantName}`);
+
+            if (plant.nextWaterDate <= todayEnd) userReminders[userId].tasks.water.push(plant.plantName);
+            if (plant.nextFertilizeDate && plant.nextFertilizeDate <= todayEnd) userReminders[userId].tasks.fertilize.push(plant.plantName);
+            if (plant.nextRepotDate && plant.nextRepotDate <= todayEnd) userReminders[userId].tasks.repot.push(plant.plantName);
         });
 
         // Send notifications
-        for (const [userId, messages] of Object.entries(notificationsMap)) {
-            // Find subscriptions for this user
-            const subscriptions = await PushSubscription.find({ userId });
+        for (const [userId, data] of Object.entries(userReminders)) {
+            const { user, tasks } = data;
+            
+            // 1. Prepare messages
+            const allTasks = [
+                ...tasks.water.map(p => `💦 Water: ${p}`),
+                ...tasks.fertilize.map(p => `🧪 Fertilize: ${p}`),
+                ...tasks.repot.map(p => `🪴 Repot: ${p}`)
+            ];
 
+            if (allTasks.length === 0) continue;
+
+            // 2. Send Push Notifications
+            const subscriptions = await PushSubscription.find({ userId });
             if (subscriptions.length > 0) {
+                const baseUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+                const pushUrl = `${baseUrl}/dashboard`;
+                console.log(`Sending Push Notification with URL: ${pushUrl}`);
+
                 const payload = JSON.stringify({
-                    title: 'Plant Care Reminder Reminder 🌿',
-                    body: `It's time to water your plants:\n${messages.join('\n')}`,
+                    title: 'Plant Care Reminder 🌿',
+                    body: `You have ${allTasks.length} tasks today:\n${allTasks.slice(0, 3).join('\n')}${allTasks.length > 3 ? '\n...and more' : ''}`,
                     icon: '/icon-192x192.png',
-                    url: '/dashboard'
+                    url: pushUrl
                 });
+
+
 
                 subscriptions.forEach(async (sub) => {
                     try {
@@ -49,8 +79,23 @@ const checkAndSendReminders = async () => {
                     }
                 });
             }
+
+            if (process.env.EMAIL_USER && user.email) {
+                const taskHtml = getCareReportTemplate(
+                    user.name, 
+                    tasks, 
+                    process.env.FRONTEND_URL || 'http://localhost:5173'
+                );
+
+
+                try {
+                    await sendEmail(user.email, `🌿 Plant Care Tasks for Today (${allTasks.length})`, taskHtml);
+                } catch (emailErr) {
+                    console.error(`Failed to send email to ${user.email}:`, emailErr);
+                }
+            }
         }
-        console.log(`Pushed reminders for ${Object.keys(notificationsMap).length} users.`);
+        console.log(`Reminders processed for ${Object.keys(userReminders).length} users.`);
     } catch (error) {
         console.error('Error in reminder cron:', error);
     }
@@ -63,3 +108,4 @@ const startReminderCron = () => {
 };
 
 module.exports = { startReminderCron, checkAndSendReminders };
+

@@ -8,7 +8,25 @@ const PlantDetails = () => {
     const { id } = useParams();
     const [plant, setPlant] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [logNote, setLogNote] = useState('');
     const [error, setError] = useState('');
+
+    const handleAddNote = async () => {
+        if (!logNote.trim()) return;
+        try {
+            const today = new Date().toLocaleDateString();
+            const newNotes = plant.notes 
+                ? `${plant.notes}\n\n[${today}]: ${logNote}`
+                : `[${today}]: ${logNote}`;
+            
+            await api.put(`/plants/${id}`, { notes: newNotes });
+            setLogNote('');
+            fetchPlant(); // refresh
+        } catch (err) {
+            setError('Failed to add note');
+        }
+    };
+
 
     const fetchPlant = async () => {
         try {
@@ -76,11 +94,16 @@ const PlantDetails = () => {
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             {/* Nav */}
-            <div className="flex justify-between items-center mb-6">
-                <Link to="/" className="inline-flex items-center text-slate-500 hover:text-emerald-600 transition-colors bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-100 font-medium">
-                    <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
-                </Link>
-                <Link to={`/edit-plant/${plant._id}`} className="inline-flex items-center text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl transition-colors font-medium shadow-sm">
+            <div className="flex justify-between">
+                <div className="mb-6">
+                    <Link 
+                        to="/" 
+                        className="inline-flex items-center text-emerald-700 hover:text-white bg-white hover:bg-emerald-600 px-5 py-2.5 rounded-xl shadow-sm border border-emerald-100 font-bold transition-all transform hover:-translate-x-1"
+                    >
+                        <ArrowLeft className="w-5 h-5 mr-2" /> Back to Dashboard
+                    </Link>
+                </div>
+                <Link to={`/edit-plant/${plant._id}`} className="inline-flex items-center text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl transition-colors font-medium shadow-sm h-fit mt-1">
                     <Edit3 className="w-4 h-4 mr-2" /> Edit Plant
                 </Link>
             </div>
@@ -186,19 +209,55 @@ const PlantDetails = () => {
                                 </div>
                             )}
                         </div>
+
+                        {/* Quick Note Section */}
+                        <div className="mt-8 pt-8 border-t border-slate-100">
+                            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                                <Edit3 className="w-5 h-5 mr-2 text-emerald-500" /> Add a Quick Note
+                            </h3>
+                            <div className="flex gap-2">
+                                <input 
+                                    type="text"
+                                    placeholder="e.g. New leaf growing, added fertilizer..."
+                                    value={logNote}
+                                    onChange={(e) => setLogNote(e.target.value)}
+                                    className="flex-grow px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50 transition-all"
+                                />
+                                <button 
+                                    onClick={handleAddNote}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold transition-colors shadow-sm"
+                                >
+                                    Add
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Notes Section */}
+
+                    {/* Expert Care Tips Section */}
+                    {plant.careTips && (
+                        <div className="bg-emerald-50/50 rounded-3xl p-8 shadow-sm border border-emerald-100">
+                            <h3 className="text-xl font-bold text-emerald-800 flex items-center mb-4">
+                                <Leaf className="w-5 h-5 mr-2 text-emerald-600" /> Expert Care Tips
+                            </h3>
+                            <div className="text-slate-700 whitespace-pre-line leading-relaxed italic">
+                                {plant.careTips}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* My Notes Section */}
                     {plant.notes && (
                         <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
                             <h3 className="text-xl font-bold text-slate-800 flex items-center mb-4">
-                                <Info className="w-5 h-5 mr-2 text-emerald-500" /> Care Notes
+                                <Info className="w-5 h-5 mr-2 text-emerald-500" /> My Notes
                             </h3>
                             <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 text-slate-600 whitespace-pre-line leading-relaxed">
                                 {plant.notes}
                             </div>
                         </div>
                     )}
+
                 </div>
             </div>
         </div>

@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { getPlants, getPlantById, addPlant, updatePlant, deletePlant } = require('../controllers/plantController');
-const protect = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/authMiddleware');
+
 
 router.route('/')
     .get(protect, getPlants)
