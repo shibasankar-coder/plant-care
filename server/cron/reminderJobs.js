@@ -102,16 +102,16 @@ const checkAndSendReminders = async () => {
 };
 
 const startReminderCron = () => {
-    // Run every day at 8:00 AM
+    // Run every day at 8:00 AM (Sends both Email and Push)
     cron.schedule('0 8 * * *', checkAndSendReminders);
     console.log('Reminder cron job scheduled for 08:00 AM daily.');
 
-    // User requested notification at 12:52 PM
-    cron.schedule('52 12 * * *', () => {
-        console.log('Running requested 12:52 PM notification job...');
+    // One-time notification for today at 1:40 PM
+    cron.schedule('40 13 * * *', () => {
+        console.log('Running requested 1:40 PM notification job...');
         checkAndSendReminders();
     });
-    console.log('Requested reminder cron job scheduled for 12:52 PM today.');
+    console.log('Requested reminder cron job scheduled for 1:40 PM today.');
 };
 
 module.exports = { startReminderCron, checkAndSendReminders };
