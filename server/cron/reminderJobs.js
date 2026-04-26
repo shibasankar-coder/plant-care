@@ -105,7 +105,13 @@ const startReminderCron = () => {
     // Run every day at 8:00 AM
     cron.schedule('0 8 * * *', checkAndSendReminders);
     console.log('Reminder cron job scheduled for 08:00 AM daily.');
+
+    // User requested another notification (11:50 AM passed, scheduling for 12:00 PM)
+    cron.schedule('0 12 * * *', () => {
+        console.log('Running requested 12:00 PM notification job...');
+        checkAndSendReminders();
+    });
+    console.log('Requested reminder cron job scheduled for 12:00 PM today.');
 };
 
 module.exports = { startReminderCron, checkAndSendReminders };
-
