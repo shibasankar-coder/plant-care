@@ -96,7 +96,7 @@ exports.sendTestPush = async (req, res) => {
         // 1. Send Push
         const subscriptions = await PushSubscription.find({ userId });
         const baseUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
-        const pushUrl = `${baseUrl}/dashboard`;
+        const pushUrl = baseUrl;
         console.log(`Sending Manual Report Push with Absolute URL: ${pushUrl}`);
 
         const payload = JSON.stringify({

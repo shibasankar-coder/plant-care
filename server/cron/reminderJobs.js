@@ -57,7 +57,7 @@ const checkAndSendReminders = async () => {
             const subscriptions = await PushSubscription.find({ userId });
             if (subscriptions.length > 0) {
                 const baseUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
-                const pushUrl = `${baseUrl}/dashboard`;
+                const pushUrl = baseUrl;
                 console.log(`Sending Push Notification with Absolute URL: ${pushUrl}`);
 
                 const payload = JSON.stringify({
@@ -106,12 +106,12 @@ const startReminderCron = () => {
     cron.schedule('0 8 * * *', checkAndSendReminders);
     console.log('Reminder cron job scheduled for 08:00 AM daily.');
 
-    // User requested another notification (11:50 AM passed, scheduling for 12:00 PM)
-    cron.schedule('0 12 * * *', () => {
-        console.log('Running requested 12:00 PM notification job...');
+    // User requested notification at 12:52 PM
+    cron.schedule('52 12 * * *', () => {
+        console.log('Running requested 12:52 PM notification job...');
         checkAndSendReminders();
     });
-    console.log('Requested reminder cron job scheduled for 12:00 PM today.');
+    console.log('Requested reminder cron job scheduled for 12:52 PM today.');
 };
 
 module.exports = { startReminderCron, checkAndSendReminders };
